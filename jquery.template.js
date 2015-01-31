@@ -2,6 +2,13 @@
  * Version 0.0.1
  * By Paul Lessing (paul@paullessing.com)
  * Licensed under the MIT license
+ * 
+ * Calling $.template() on a node turns that element into a template, and removes it from the DOM.
+ * The returned Template object provides a function, newInstance(),
+ * which creates a copy of the template with the given parameters inserted.
+ * 
+ * The copy can be either manually inserted (it is a DOM node without a parent),
+ * or directly inserted as a child of the parent of the original template root.
  */
 ;(function($) {
 	function Template(root) {
@@ -10,6 +17,8 @@
 		
 		function init() {
 			dom.root = $(root);
+			dom.parent = dom.root.parent();
+			
 			dom.root.removeClass('template'); // If present
 			dom.root.remove();
 			dom.root.data('template', self);
@@ -37,7 +46,25 @@
 			return thisDom;
 		}
 		
-		this.newInstance = function(params) {
+		/**
+		 * Create a new copy of the template, inserting the given parameters as content for the matching tags.
+		 * 
+		 * @param insertInPlace {boolean} (optional) Append the new instance to the parent of the original template
+		 * @param params {object} A key-value map of parameters. The following types will be accepted:
+		 *                        * String: Plaintext, will be escaped
+		 *                        * Function: No-argument function, will be called.
+		 *                                    The result has the same rules applied again (e.g. string will be escaped plaintext).
+		 *                        * Object: Possible keys:
+		 *                          * text: Escaped plaintext, same as passing a string
+		 *                          * html: Value will be inserted as HTML (using $.html)
+		 *                          * callback: Function taking the jQuery element as parameter.
+		 *                                      The function can manipulate the element as required.
+		 */
+		this.newInstance = function(insertInPlace, params) {
+			if (typeof params === 'undefined') {
+				params = insertInPlace;
+				insertInPlace = false;
+			}
 			var copy = dom.root.clone();
 			var copyDom = getDom(copy);
 			$.each(params, function(key, value) {
@@ -46,6 +73,9 @@
 					applyValue($target, value);
 				}
 			});
+			if (insertInPlace) {
+				dom.parent.append(copy);
+			}
 			return copy;
 		}
 		
