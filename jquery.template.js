@@ -9,6 +9,8 @@
  * 
  * The copy can be either manually inserted (it is a DOM node without a parent),
  * or directly inserted as a child of the parent of the original template root.
+ * 
+ * TODO: constructor param to determine whether to remove the element. If I do this I'll have to make a defensive copy on .template() and use that as root instead
  */
 ;(function($) {
 	function Template(root) {
@@ -108,13 +110,20 @@
 			}
 		}
 		
+		/**
+		 * Used for testing
+		 */
+		this._getTemplateObject = function() {
+			return dom.root;
+		}
+		
 		init();
 	}
 	
 	$.fn.extend({
 		template: function() {
 			if (!$(this).length) {
-				return; // Don't create a template from an empty selector
+				return null; // Don't create a template from an empty selector
 			}
 			// Only use the first element found, otherwise we won't be able to consistently return one element.
 			return new Template($(this).first());

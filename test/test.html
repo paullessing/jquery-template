@@ -5,17 +5,52 @@
 	<title>Test page for $.template</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 	<script src="../jquery.template.js"></script>
+	
+	<link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.17.1.css">
 </head>
-<body id="home">
-	<h1>Test page</h1>
-	<div class="container">
-		<div class="template">
-			<p data-template="name">Placeholder Name</p>
-			<div>
-				<span data-template="time">00:00</span>
-				<span data-template="message">Message</span>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture">
+		<div class="container">
+			<div class="template">
+				<p data-template="name" class="name">Placeholder Name</p>
+				<div>
+					<span data-template="time" class="time">00:00</span>
+					<span data-template="message" class="message">Message</span>
+				</div>
 			</div>
 		</div>
 	</div>
+	
+	<script src="https://code.jquery.com/qunit/qunit-1.17.1.js"></script>
+	<script>
+		var assert = QUnit.assert;
+		var template;
+		var $root;
+		
+		QUnit.testStart(function() {
+			$root = $('.template');
+		});
+		
+		QUnit.module('Setting up');
+		QUnit.test('Calling .template() on a defined object', function() {
+			template = $root.template();
+			
+			assert.ok(!$.contains(document, $root), 'The template object is removed from the DOM');
+			assert.ok(!$root.hasClass('template'), 'Any .template class is removed from the object');
+		});
+		QUnit.test('Calling .template() on an empty object', function() {
+			template = $().template();
+			
+			assert.ok(template === null, 'Template should be null');
+		});
+		QUnit.test('Calling .template() on multiple objects', function() {
+			var manyElements = $('#qunit-fixture > *');
+
+			template = manyElements.template();
+			
+			assert.strictEqual(template._getTemplateObject()[0], manyElements[0], 'Should take the first element');
+		});
+	</script>
 </body>
 </html>
