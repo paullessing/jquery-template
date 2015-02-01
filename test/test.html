@@ -64,6 +64,7 @@
 			
 			assert.ok(!!instance, 'Instance should not be null or undefined');
 			assert.ok(!$.contains(document, instance), 'Instance should not be in the document yet');
+			assert.strictEqual(instance.find('data-template').length, 0, '"data-template" attributes should be removed from the instance');
 		});
 		QUnit.test('Calling .create() with parameters', function() {
 			var params = {
@@ -106,6 +107,19 @@
 			assert.strictEqual($names.length, 2, 'There should still be two elements');
 			assert.strictEqual($($names[0]).text(), params.name, 'The first element should use the provided text');
 			assert.strictEqual($($names[1]).text(), params.name, 'The second element should use the provided text');
+		});
+		QUnit.test('Calling create() with function parameter when there are multiple matching elements', function() {
+			var textContent = 'textContent';
+			var params = {
+				name: function() { return textContent; }
+			}
+			var spy = sinon.spy(params, "name");
+			var instance = template.create(params);
+
+			var $names = instance.find('.name');
+			assert.strictEqual($($names[0]).text(), textContent, 'The first element should use the provided text');
+			assert.strictEqual($($names[1]).text(), textContent, 'The second element should use the provided text');
+			assert.ok(spy.calledOnce, 'The function should only be called once');
 		});
 		
 		QUnit.module('Parameter types', {
