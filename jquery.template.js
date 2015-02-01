@@ -1,18 +1,32 @@
 /**
- * Version 0.0.1
- * By Paul Lessing (paul@paullessing.com)
+ * jQuery Template Plugin 0.1.0
+ * https://github.com/pingless/jquery-template
+ *
+ * Copyright 2015 Paul Lessing
  * Licensed under the MIT license
  * 
  * Calling $.template() on a node turns that element into a template, and removes it from the DOM.
- * The returned Template object provides a function, newInstance(),
+ * The returned Template object provides a function, create(),
  * which creates a copy of the template with the given parameters inserted.
  * 
  * The copy can be either manually inserted (it is a DOM node without a parent),
  * or directly inserted as a child of the parent of the original template root.
- * 
- * TODO: constructor param to determine whether to remove the element. If I do this I'll have to make a defensive copy on .template() and use that as root instead
  */
 ;(function($) {
+	"use strict";
+
+	// TODO: constructor param to determine whether to remove the element. If I do this I'll have to make a defensive copy on .template() and use that as root instead
+
+	$.fn.extend({
+		template: function() {
+			if (!$(this).length) {
+				return null; // Don't create a template from an empty selector
+			}
+			// Only use the first element found, otherwise we won't be able to consistently return one element.
+			return new Template($(this).first());
+		}
+	});
+
 	function Template(root) {
 		var dom = {};
 		var self = this;
@@ -62,14 +76,15 @@
 		 *                          * callback: Function taking the jQuery element as parameter.
 		 *                                      The function can manipulate the element as required.
 		 */
-		this.newInstance = function(insertInPlace, params) {
-			if (typeof params === 'undefined') {
-				params = insertInPlace;
+		this.create = function(insertInPlace, data) {
+			if (typeof data === 'undefined') {
+				data = insertInPlace;
 				insertInPlace = false;
 			}
 			var copy = dom.root.clone();
 			var copyDom = getDom(copy);
-			$.each(params, function(key, value) {
+			$.each(data || {}, // Ensure this loop doesn't break even if create() was called without parameters
+					function(key, value) {
 				var $target = copyDom[key];
 				if ($target) {
 					applyValue($target, value);
@@ -78,6 +93,7 @@
 			if (insertInPlace) {
 				dom.parent.append(copy);
 			}
+			copy.data('template', self);
 			return copy;
 		}
 		
@@ -115,18 +131,8 @@
 		 */
 		this._getTemplateObject = function() {
 			return dom.root;
-		}
+		};
 		
 		init();
 	}
-	
-	$.fn.extend({
-		template: function() {
-			if (!$(this).length) {
-				return null; // Don't create a template from an empty selector
-			}
-			// Only use the first element found, otherwise we won't be able to consistently return one element.
-			return new Template($(this).first());
-		}
-	});
 })(jQuery);

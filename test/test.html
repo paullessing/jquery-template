@@ -16,28 +16,30 @@
 				<p data-template="name" class="name">Placeholder Name</p>
 				<div>
 					<span data-template="time" class="time">00:00</span>
-					<span data-template="message" class="message">Message</span>
 				</div>
 			</div>
 		</div>
 	</div>
 	
+	<script src="sinonjs-1.12.2.js"></script>
 	<script src="https://code.jquery.com/qunit/qunit-1.17.1.js"></script>
 	<script>
 		var assert = QUnit.assert;
 		var template;
+		var parent;
 		var $root;
 		
+		// Always reset $root to the template
 		QUnit.testStart(function() {
 			$root = $('.template');
 		});
 		
 		QUnit.module('Setting up');
 		QUnit.test('Calling .template() on a defined object', function() {
-			template = $root.template();
+			$root.template();
 			
-			assert.ok(!$.contains(document, $root), 'The template object is removed from the DOM');
-			assert.ok(!$root.hasClass('template'), 'Any .template class is removed from the object');
+			assert.ok(!$.contains(document, $root), 'The template object should be removed from the DOM');
+			assert.ok(!$root.hasClass('template'), 'Any .template class should be removed from the object');
 		});
 		QUnit.test('Calling .template() on an empty object', function() {
 			template = $().template();
@@ -51,6 +53,198 @@
 			
 			assert.strictEqual(template._getTemplateObject()[0], manyElements[0], 'Should take the first element');
 		});
+
+		QUnit.module('Creating a template using .create (without auto-append)', {
+			beforeEach: function() {
+				template = $root.template();
+			}
+		});
+		QUnit.test('Calling .create() without parameters', function() {
+			var instance = template.create();
+			
+			assert.ok(!!instance, 'Instance should not be null or undefined');
+			assert.ok(!$.contains(document, instance), 'Instance should not be in the document yet');
+		});
+		QUnit.test('Calling .create() with parameters', function() {
+			var params = {
+				name: 'Name',
+				time: '12:34'
+			};
+			var instance = template.create(params);
+
+			assert.strictEqual(instance.find('.name').text(), params.name, 'Element in the root should have its content replaced');
+			assert.strictEqual(instance.find('.time').text(), params.time, 'Element nested further down should have its content replaced');
+			
+			assert.strictEqual(instance.data('template'), template, 'Copy should have data-attribute "template" set to the template object');
+		});
+		QUnit.test('Calling .create() with partial parameters', function() {
+			var params = {
+				name: 'Name'
+			};
+
+			var originalTime = $root.find('.time').text();
+			
+			var instance = template.create(params);
+
+			assert.strictEqual(instance.find('.name').text(), params.name, 'Element included as parameter should have its content replaced');
+			assert.strictEqual(instance.find('.time').text(), originalTime, 'Element not included should not be touched');
+		});
+		
+		QUnit.module('Template with repeated elements', {
+			beforeEach: function() {
+				$root.append('<div class="name" data-template="name">Second name</div>');
+				template = $root.template();
+			}
+		})
+		QUnit.test('Calling create() when a parameter matches multiple elements', function() {
+			var params = {
+				name: 'My Name'
+			}
+			var instance = template.create(params);
+			
+			var $names = instance.find('.name');
+			assert.strictEqual($names.length, 2, 'There should still be two elements');
+			assert.strictEqual($($names[0]).text(), params.name, 'The first element should use the provided text');
+			assert.strictEqual($($names[1]).text(), params.name, 'The second element should use the provided text');
+		});
+		
+		QUnit.module('Parameter types', {
+			beforeEach: function() {
+				template = $root.template();
+			}
+		});
+		QUnit.test('Calling create() with string parameter containing HTML', function() {
+			var params = {
+				name: '<h1>Name</h1>'
+			}
+			var instance = template.create(params);
+			var $name = instance.find('.name');
+			
+			assert.strictEqual($name.text(), params.name, 'HTML should be escaped');
+			assert.strictEqual($name.children().length, 0, 'Tag should not have children');
+		});
+		QUnit.test('Calling create() with Object parameter "text"', function() {
+			var params = {
+				name: {
+					text: '<h1>text</h1>'
+				}
+			}
+			var instance = template.create(params);
+			var $name = instance.find('.name');
+			
+			assert.strictEqual($name.text(), params.name.text, 'HTML should be escaped');
+			assert.strictEqual($name.children().length, 0, 'Tag should not have children');
+		});
+		QUnit.test('Calling create() with Object parameter "html"', function() {
+			var htmlContent = 'myHtmlContent';
+			var params = {
+				name: {
+					html: '<h1>' + htmlContent + '</h1>'
+				}
+			}
+			var instance = template.create(params);
+			var $name = instance.find('.name');
+			
+			assert.strictEqual($name.children().length, 1, 'Tag should have a child');
+			assert.strictEqual($name.children().first().text(), htmlContent, 'Child tag should have the correct content');
+		});
+		QUnit.test('Calling create() with Object parameter "callback"', function() {
+			var callback = sinon.spy();
+			var params = {
+				name: {
+					callback: callback
+				}
+			}
+			var instance = template.create(params);
+
+			var $name = instance.find('.name');
+			
+			assert.ok(callback.calledOnce, 'Callback should be called once');
+			assert.strictEqual(callback.firstCall.args[0].get(0), $name.get(0), 'Callback should be called with a jQuery object of the element');
+		});
+		QUnit.test('Calling create() with function parameter which returns a string', function() {
+			var textContent = 'textContent';
+			var params = {
+				name: function() { return textContent; }
+			}
+			var instance = template.create(params);
+
+			var $name = instance.find('.name');
+			assert.strictEqual($name.text(), textContent, 'Result of function should be used as text');
+		});
+		QUnit.test('Calling create() with function parameter which returns a function', function() {
+			var textContent = 'textContent';
+			var params = {
+				name: function() { return function() { return textContent; }; }
+			}
+			var instance = template.create(params);
+
+			var $name = instance.find('.name');
+			assert.strictEqual($name.text(), textContent, 'Result of repeated function should be used as text');
+		});
+		
+		QUnit.module('Calling create() multiple times', {
+			beforeEach: function() {
+				template = $root.template();
+			}
+		});
+		QUnit.test('Calling create() with different params returns different instances', function() {
+			var params1 = {
+				name: 'name1'
+			};
+			var params2 = {
+				name: 'name2'
+			};
+			var instance1 = template.create(params1);
+			var instance2 = template.create(params2);
+			
+			assert.notEqual(instance1[0], instance2[0], 'Instances should point at different DOM objects');
+			assert.strictEqual(instance1.find('.name').text(), params1.name, 'Instance 1 should have param1\'s values');
+			assert.strictEqual(instance2.find('.name').text(), params2.name, 'Instance 2 should have param2\'s values');
+		});
+
+		
+		QUnit.module('Creating a template using .create (with auto-append)', {
+			beforeEach: function() {
+				parent = $root.parent();
+			}
+		});
+		QUnit.test('Appending to an empty parent', function() {
+			template = $root.template();
+			var instance = template.create(true, {});
+
+			assert.strictEqual(instance.parent()[0], parent[0], 'Instance should be appended to the template\'s parent');
+			assert.strictEqual(instance.next().length, 0, 'Instance should be added to the end of the parent');
+		});
+		QUnit.test('Appending to a non-empty parent', function() {
+			parent.append('<div/><div/>');
+			template = $root.template();
+			var instance = template.create(true, {});
+
+			assert.strictEqual(instance.parent()[0], parent[0], 'Instance should be appended to the template\'s parent');
+			assert.strictEqual(instance.next().length, 0, 'Instance should be added to the end of the parent');
+		});
+		QUnit.test('Appending to parent who has since moved', function() {
+			template = $root.template();
+			var container = $('#qunit-fixture');
+			container.append('<div><div id="insidemost">Other content<span/></div></div>');
+			container.find('#insidemost').append(parent);
+
+			var instance = template.create(true, {});
+
+			assert.strictEqual(instance.parent()[0], parent[0], 'Instance should be appended to the template\'s original parent even if that has moved');
+		});
+		QUnit.test('Appending repeatedly', function() {
+			template = $root.template();
+			var instance1 = template.create(true, {});
+			var instance2 = template.create(true, {});
+
+			assert.strictEqual(instance1[0], parent.children()[0], 'First instance should be the first child');
+			assert.strictEqual(instance2[0], parent.children()[1], 'Second instance should be the second child');
+		});
+		
+		QUnit.module('Data-attribute')
+		
 	</script>
 </body>
 </html>
