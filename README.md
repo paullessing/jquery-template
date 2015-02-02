@@ -66,7 +66,8 @@ If it's `false` or omitted, the function will simply return a jQuery DOM object 
 
 `data` (object):
 Key-value pairs corresponding to the `data-template` attributes in the template. There are multiple supported types of value:
-* `string`: Value is inserted using `$.text()` (as an escaped String).
+* `string`, `boolean` or `number`: Value is inserted using `$.text()` (as an escaped String).
+                                   Booleans and Number types will be cast to String.
 * `function`: The function is called without arguments to retrieve the value.
         This allows deferring calculation of values until the time of creation of the instance.
         The function is only called once per instance, even if there are multiple elements matching;

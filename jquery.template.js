@@ -1,5 +1,5 @@
 /**
- * jQuery Template Plugin 0.1.0
+ * jQuery Template Plugin 0.1.1
  * https://github.com/pingless/jquery-template
  *
  * Copyright 2015 Paul Lessing
@@ -99,6 +99,8 @@
 		
 		function applyValue($target, value) {
 			switch (typeof value) {
+			case 'boolean': // Fall-through to String
+			case 'number': // Fall-through to String
 			case 'string':
 				$target.text(value);
 				break;

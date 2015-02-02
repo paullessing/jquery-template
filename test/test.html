@@ -24,7 +24,7 @@
 	<script src="sinonjs-1.12.2.js"></script>
 	<script src="https://code.jquery.com/qunit/qunit-1.17.1.js"></script>
 	<script>
-		var assert = QUnit.assert;
+		var assert = QUnit.assert;1
 		var template;
 		var parent;
 		var $root;
@@ -126,6 +126,33 @@
 			beforeEach: function() {
 				template = $root.template();
 			}
+		});
+		QUnit.test('Calling create() with string parameter', function() {
+			var params = {
+				name: 'text'
+			}
+			var instance = template.create(params);
+			var $name = instance.find('.name');
+			
+			assert.strictEqual($name.text(), params.name, 'String should be printed as-is');
+		});
+		QUnit.test('Calling create() with boolean parameter', function() {
+			var params = {
+				name: true
+			}
+			var instance = template.create(params);
+			var $name = instance.find('.name');
+			
+			assert.strictEqual($name.text(), params.name.toString(), 'Boolean should be converted to string');
+		});
+		QUnit.test('Calling create() with numeric parameter', function() {
+			var params = {
+				name: 42
+			}
+			var instance = template.create(params);
+			var $name = instance.find('.name');
+			
+			assert.strictEqual($name.text(), params.name.toString(), 'Numeric should be converted to string');
 		});
 		QUnit.test('Calling create() with string parameter containing HTML', function() {
 			var params = {
@@ -256,9 +283,6 @@
 			assert.strictEqual(instance1[0], parent.children()[0], 'First instance should be the first child');
 			assert.strictEqual(instance2[0], parent.children()[1], 'Second instance should be the second child');
 		});
-		
-		QUnit.module('Data-attribute')
-		
 	</script>
 </body>
 </html>
