@@ -85,3 +85,6 @@ If the `data` object contains no key for an element with a `data-template` attri
 
 ## Unit tests
 There are extensive unit tests, simply open the `test/test.html` file in a browser to see the results.
+
+## License
+Licensed under the MIT license.
