@@ -58,6 +58,17 @@ Output:
 </ul>
 ```
 ## Parameters
+### `.template([removeFromDom])`
+The `template()` function takes a single parameter:
+
+`removeFromDom` (boolean, optional, default `true`):
+If set to `true` (or omitted), the template node will be removed from the DOM.
+This is the standard behaviour and is useful when the template contains e.g. placeholder text.
+If the template node has class `template`, this class will be removed.
+
+If the parameter is set to `false`, the template node is not touched at all.
+
+### `create([insertInPlace], params)`
 The `create()` function takes two parameters:
 
 `insertInPlace` (boolean, optional):

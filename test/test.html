@@ -34,11 +34,15 @@
 			$root = $('.template');
 		});
 		
+		function isInBody($element) {
+			return $element.closest('html').length > 0;
+		}
+		
 		QUnit.module('Setting up');
 		QUnit.test('Calling .template() on a defined object', function() {
 			$root.template();
 			
-			assert.ok(!$.contains(document, $root), 'The template object should be removed from the DOM');
+			assert.ok(!isInBody($root), 'The template object should be removed from the DOM');
 			assert.ok(!$root.hasClass('template'), 'Any .template class should be removed from the object');
 		});
 		QUnit.test('Calling .template() on an empty object', function() {
@@ -63,7 +67,7 @@
 			var instance = template.create();
 			
 			assert.ok(!!instance, 'Instance should not be null or undefined');
-			assert.ok(!$.contains(document, instance), 'Instance should not be in the document yet');
+			assert.ok(!isInBody(instance), 'Instance should not be in the document yet');
 			assert.strictEqual(instance.find('data-template').length, 0, '"data-template" attributes should be removed from the instance');
 		});
 		QUnit.test('Calling .create() with parameters', function() {
@@ -280,8 +284,42 @@
 			var instance1 = template.create(true, {});
 			var instance2 = template.create(true, {});
 
-			assert.strictEqual(instance1[0], parent.children()[0], 'First instance should be the first child');
-			assert.strictEqual(instance2[0], parent.children()[1], 'Second instance should be the second child');
+			assert.strictEqual(parent.children()[0], instance1[0], 'First instance should be the first child');
+			assert.strictEqual(parent.children()[1], instance2[0], 'Second instance should be the second child');
+		});
+		
+		QUnit.module('Testing removeFromDom');
+		QUnit.test('Calling .template() without parameters', function() {
+			$root.template();
+			assert.ok(!isInBody($root), 'Element should be removed');
+		});
+		QUnit.test('Calling .template() with true', function() {
+			$root.template(true);
+			assert.ok(!isInBody($root), 'Element should be removed');
+		});
+		QUnit.test('Calling .template() with false', function() {
+			$root.template(false);
+			assert.ok(isInBody($root), 'Element should be present');
+			assert.ok($root.hasClass('template'), '"template" class should not be removed');
+		});
+		QUnit.test('Creating an instance when the template was not removed', function() {
+			var template = $root.template(false);
+			var instance = template.create();
+			
+			assert.ok(!instance.hasClass('template'), '"template" class should not be present on instance');
+			assert.ok(isInBody($root), 'Template element should still be present');
+		});
+		QUnit.test('Creating an instance when the template was not removed, and the template gets modified', function() {
+			var template = $root.template(false);
+			$root.text('Lorem ipsum dolor sit amet');
+			
+			var params = {
+				name: 'Foo Bar'
+			};
+			var instance = template.create(params);
+			
+			assert.ok(instance.find('.name').length > 0, 'Elements should still be present in the instance');
+			assert.strictEqual(instance.find('.name').text(), params.name, 'Parameters should be replaced as usual');
 		});
 	</script>
 </body>

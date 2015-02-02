@@ -1,5 +1,5 @@
 /**
- * jQuery Template Plugin 0.1.1
+ * jQuery Template Plugin 0.2.0
  * https://github.com/pingless/jquery-template
  *
  * Copyright 2015 Paul Lessing
@@ -15,31 +15,38 @@
 ;(function($) {
 	"use strict";
 
-	// TODO: constructor param to determine whether to remove the element. If I do this I'll have to make a defensive copy on .template() and use that as root instead
-
 	$.fn.extend({
-		template: function() {
+		template: function(removeFromDom) {
+			if (typeof removeFromDom === 'undefined') {
+				removeFromDom = true;
+			}
 			if (!$(this).length) {
 				return null; // Don't create a template from an empty selector
 			}
 			// Only use the first element found, otherwise we won't be able to consistently return one element.
-			return new Template($(this).first());
+			return new Template($(this).first(), !!removeFromDom);
 		}
 	});
 
-	function Template(root) {
+	function Template(root, removeFromDom) {
 		var dom = {};
 		var self = this;
-		
+
 		function init() {
-			dom.root = $(root);
-			dom.parent = dom.root.parent();
-			
+			var $root = $(root);
+			dom.parent = $root.parent();
+
+			if (removeFromDom) {
+				dom.root = $root;
+				dom.root.remove();
+			} else {
+				dom.root = $root.clone();
+			}
+
 			dom.root.removeClass('template'); // If present
-			dom.root.remove();
 			dom.root.data('template', self);
 		}
-		
+
 		/**
 		 * Parses the given DOM root for elements with "data-template" attributes
 		 * and creates a DOM structure which can be used to insert content.
@@ -61,7 +68,7 @@
 			});
 			return thisDom;
 		}
-		
+
 		/**
 		 * Create a new copy of the template, inserting the given parameters as content for the matching tags.
 		 * 
@@ -96,7 +103,7 @@
 			copy.data('template', self);
 			return copy;
 		}
-		
+
 		function applyValue($target, value) {
 			switch (typeof value) {
 			case 'boolean': // Fall-through to String
@@ -127,14 +134,14 @@
 				$target.text('');
 			}
 		}
-		
+
 		/**
 		 * Used for testing
 		 */
 		this._getTemplateObject = function() {
 			return dom.root;
 		};
-		
+
 		init();
 	}
 })(jQuery);
