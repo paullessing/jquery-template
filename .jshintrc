@@ -4,7 +4,7 @@
 	"eqeqeq": true,
 	"forin": true,
 	"freeze": true,
-	"immed", true,
+	"immed": true,
 	"latedef": "nofunc",
 	"newcap": true,
 	"nocomma": true,
